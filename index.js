@@ -27,10 +27,9 @@ let contacts = [
 ];
 
 app.get("/info", (req, res) => {
+  const date = new Date();
   res.send(
-    `<div><h2>Phonebook has info for ${
-      contacts.length
-    } contacts</h2><p>${Date.now()}</p></div>`
+    `<div><p>Phonebook has info for ${contacts.length} contacts</p><p>${date}</p></div>`
   );
 });
 
