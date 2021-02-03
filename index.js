@@ -1,6 +1,7 @@
 const express = require("express");
-
 const app = express();
+app.use(express.json());
+
 const PORT = 3001;
 
 let contacts = [
@@ -35,6 +36,47 @@ app.get("/info", (req, res) => {
 
 app.get("/api/contacts", (req, res) => {
   res.json(contacts);
+});
+
+app.get("/api/contacts/:id", (req, res) => {
+  const id = Number(req.params.id);
+  const contact = contacts.find((contact) => contact.id === id);
+  if (contact) {
+    res.json(contact);
+  } else {
+    res.status(404).end();
+  }
+});
+
+app.post("/api/contacts", (req, res) => {
+  const body = req.body;
+  console.log(body);
+
+  if (!body.name || !body.number) {
+    return res.status(400).json({
+      error: "not all the contacts credentials in the request",
+    });
+  }
+
+  if (contacts.find((contact) => contact.name === body.name)) {
+    return res.status(400).json({
+      error: "There is alredy a contact with this name",
+    });
+  }
+  const contact = {
+    id: Date.now(),
+    name: body.name,
+    number: body.number,
+  };
+
+  contacts = contacts.concat(contact);
+  res.json(contacts);
+});
+
+app.delete("/api/contacts/:id", (req, res) => {
+  const id = Number(req.params.id);
+  contacts = contacts.filter((contact) => contact.id !== id);
+  res.status(204).end();
 });
 
 app.listen(PORT, (error) => {
