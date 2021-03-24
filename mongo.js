@@ -27,9 +27,9 @@ const createAndSaveNewContact = (name, number, Contact) => {
 
 const password = process.argv[2];
 
-const uri = `mongodb+srv://fullstack:${password}@mycluster.tlvgl.mongodb.net/contacts-app?retryWrites=true&w=majority`;
+const url = `mongodb+srv://fullstack:${password}@mycluster.tlvgl.mongodb.net/contacts-app?retryWrites=true&w=majority`;
 
-mongoose.connect(uri, {
+mongoose.connect(url, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useFindAndModify: false,

@@ -1,21 +1,25 @@
 //Env variable library
 require("dotenv").config();
 
+//Middlewares
+const middlewares = require("./middlewares");
+
 //Server dependencies
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
 
+//Database model
+
+const Contact = require("./models/contact");
+
 const app = express();
 app.use(express.static("build"));
 
+//MongoDB Database setup
 const PORT = process.env.PORT || 3001;
-const PASSWORD = process.env.PASSWORD;
-console.log(PASSWORD);
 
-const unknownEndPoint = (req, res) => {
-  res.status(404).send({ error: "unknown endpoint" });
-};
+//Middlewares
 
 morgan.token("data", (req, res) => {
   return JSON.stringify(req.body);
@@ -26,29 +30,6 @@ app.use(cors());
 app.use(morgan("tiny"));
 app.use(morgan(":data"));
 
-let contacts = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendick",
-    number: "39-23-6423122",
-  },
-];
-
 app.get("/info", (req, res) => {
   const date = new Date();
   res.send(
@@ -57,17 +38,21 @@ app.get("/info", (req, res) => {
 });
 
 app.get("/api/contacts", (req, res) => {
-  res.json(contacts);
+  Contact.find({}).then((contacts) => {
+    res.json(contacts);
+  });
 });
 
-app.get("/api/contacts/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const contact = contacts.find((contact) => contact.id === id);
-  if (contact) {
-    res.json(contact);
-  } else {
-    res.status(404).end();
-  }
+app.get("/api/contacts/:id", (req, res, next) => {
+  Contact.findById(req.params.id)
+    .then((contact) => {
+      if (contact) {
+        res.json(contact);
+      } else {
+        res.status(400).end();
+      }
+    })
+    .catch((err) => next(err));
 });
 
 app.post("/api/contacts", (req, res) => {
@@ -79,25 +64,36 @@ app.post("/api/contacts", (req, res) => {
     });
   }
 
-  if (contacts.find((contact) => contact.name === body.name)) {
-    return res.status(400).json({
-      error: "There is alredy a contact with this name",
-    });
-  }
-  const contact = {
-    id: Date.now(),
+  const newContact = new Contact({
     name: body.name,
     number: body.number,
-  };
+  });
 
-  contacts = contacts.concat(contact);
-  res.json(contacts);
+  newContact.save().then(() => {
+    console.log(`Contact ${body.name} saved`);
+    res.json(newContact);
+  });
 });
 
-app.delete("/api/contacts/:id", (req, res) => {
-  const id = Number(req.params.id);
-  contacts = contacts.filter((contact) => contact.id !== id);
-  res.status(204).end();
+//Update the contact number
+app.put("/api/contacts/:id", (req, res, next) => {
+  Contact.findByIdAndUpdate(
+    req.params.id,
+    { number: req.body.number },
+    { new: true }
+  )
+    .then((updatedContact) => {
+      console.log(updatedContact);
+    })
+    .catch((err) => next(err));
+});
+
+app.delete("/api/contacts/:id", (req, res, next) => {
+  Contact.findByIdAndDelete(req.params.id)
+    .then((result) => {
+      res.status(204).end();
+    })
+    .catch((err) => console.log(err));
 });
 
 app.listen(PORT, (error) => {
@@ -105,4 +101,8 @@ app.listen(PORT, (error) => {
   console.log(`Server running on port ${PORT}`);
 });
 
-app.use(unknownEndPoint);
+//Middleware for no route match
+app.use(middlewares.unknownEndPoint);
+
+//Middleware for general error handling
+app.use(middlewares.errorHandler);
