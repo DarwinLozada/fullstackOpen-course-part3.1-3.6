@@ -69,9 +69,9 @@ app.post("/api/contacts", (req, res) => {
     number: body.number,
   });
 
-  newContact.save().then(() => {
+  newContact.save().then((contact) => {
     console.log(`Contact ${body.name} saved`);
-    res.json(newContact);
+    res.json(contact);
   });
 });
 
