@@ -1,3 +1,7 @@
+//Env variable library
+require("dotenv").config();
+
+//Server dependencies
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
@@ -6,6 +10,8 @@ const app = express();
 app.use(express.static("build"));
 
 const PORT = process.env.PORT || 3001;
+const PASSWORD = process.env.PASSWORD;
+console.log(PASSWORD);
 
 const unknownEndPoint = (req, res) => {
   res.status(404).send({ error: "unknown endpoint" });
